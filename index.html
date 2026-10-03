@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dayfall – your energy forecast</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf1f4;--card:#fff;--ink:#14232e;--mute:#5d7280;--line:#d3e0e6;--acc:#1f7a6d;--sun:#f2b134;--sky1:#9fd3e6;--sky2:#fbe3a8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a22;--card:#16262f;--ink:#e8f1f5;--mute:#8fa7b4;--line:#27404c;--acc:#4fc4b0;--sky1:#27506a;--sky2:#6b5a3a}}
+:root[data-theme="dark"]{--bg:#0e1a22;--card:#16262f;--ink:#e8f1f5;--mute:#8fa7b4;--line:#27404c;--acc:#4fc4b0;--sky1:#27506a;--sky2:#6b5a3a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,.d{font-family:"Bricolage Grotesque",system-ui,sans-serif;letter-spacing:-.02em;margin:0}
+main{max-width:560px;margin:0 auto;padding:20px 18px 48px}
+.sky{border-radius:28px;padding:28px 22px;background:linear-gradient(180deg,var(--sky1),var(--sky2));position:relative;overflow:hidden;transition:background .6s}
+.sky h1{font-size:34px;line-height:1.05;font-weight:800;color:#14232e;max-width:12em}
+.sky p{color:#14232e;opacity:.78;margin:10px 0 0;max-width:30em}
+.sun{position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:var(--sun);opacity:.85;transition:all .8s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:14px}
+.row{margin:16px 0}.row label{display:flex;justify-content:space-between;font-weight:600}.row output{color:var(--acc);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--acc);height:36px}
+.hint{color:var(--mute);font-size:13px;display:flex;justify-content:space-between;margin-top:-4px}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:14px 20px;background:var(--ink);color:var(--bg);cursor:pointer;width:100%}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.bars{display:flex;gap:10px;align-items:flex-end;height:130px;margin-top:12px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%;font-size:12px;color:var(--mute)}
+.bar i{display:block;width:100%;border-radius:10px 10px 4px 4px;background:var(--acc);transition:height .7s}
+.bar.dip i{background:var(--sun)}
+.big{font-size:56px;font-weight:800;line-height:1}
+.ring{width:150px;height:150px;border-radius:50%;margin:18px auto;background:radial-gradient(circle,var(--acc),transparent 70%);display:grid;place-items:center;color:var(--bg);font-weight:800;transform:scale(.6);transition:transform 4s ease-in-out;text-align:center}
+.hide{display:none}
+.hist{display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:10px}.hist i{flex:1;background:var(--acc);border-radius:6px 6px 2px 2px;opacity:.85;min-height:4px}
+small{color:var(--mute)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><main>
+<div class="sky" id="sky"><div class="sun" id="sun"></div>
+<h1 id="head">What's today's weather inside you?</h1>
+<p id="sub">Four sliders, ten seconds. Get a forecast of your energy and one small thing to do about it.</p></div>
+
+<section id="form" class="card">
+<div class="row"><label for="sleep">Sleep last night <output id="o1">7 h</output></label><input id="sleep" type="range" min="3" max="10" step="0.5" value="7"></div>
+<div class="row"><label for="energy">Energy right now <output id="o2">3</output></label><input id="energy" type="range" min="1" max="5" value="3"><div class="hint"><span>Running on fumes</span><span>Fully charged</span></div></div>
+<div class="row"><label for="stress">Stress level <output id="o3">3</output></label><input id="stress" type="range" min="1" max="5" value="3"><div class="hint"><span>Calm</span><span>Wound tight</span></div></div>
+<div class="row"><label for="mood">Mood <output id="o4">3</output></label><input id="mood" type="range" min="1" max="5" value="3"><div class="hint"><span>Low</span><span>Great</span></div></div>
+<button id="go">Show my forecast</button></section>
+
+<section id="result" class="hide">
+<div class="card"><div class="big d" id="score">0</div><small>energy score out of 100</small>
+<h2 id="rl" style="margin-top:8px;font-size:22px"></h2>
+<div class="bars" id="bars"></div></div>
+<div class="card"><h2 style="font-size:20px" id="rt"></h2><p id="rd" style="margin:6px 0 14px"></p>
+<div id="breath" class="hide"><div class="ring" id="ring"><span id="rp">Ready</span></div></div>
+<div class="d" id="tm" style="font-size:40px;font-weight:800;text-align:center"></div>
+<button id="start">Start 60-second ritual</button></div>
+<div class="card"><h2 style="font-size:18px">Your last check-ins</h2><div class="hist" id="hist"></div><small id="hn"></small></div>
+<button class="ghost" id="again" style="margin-top:14px">Check in again</button>
+</section>
+<p style="text-align:center"><small>Built by Animesh Ojha for the Mosaic Wellness Builder Round.<br>Wellness guidance only, not medical advice.</small></p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+[["sleep","o1"," h"],["energy","o2",""],["stress","o3",""],["mood","o4",""]].forEach(([a,b,u])=>$(a).oninput=e=>$(b).textContent=e.target.value+u);
+const K="dayfall:v1";
+function load(){try{return JSON.parse(localStorage.getItem(K))||[]}catch(e){return[]}}
+function save(s){try{const h=load();h.push({t:Date.now(),s});localStorage.setItem(K,JSON.stringify(h.slice(-14)))}catch(e){}}
+let timer,phaseT;
+function calc(){
+ const sl=+$("sleep").value,en=+$("energy").value,st=+$("stress").value,mo=+$("mood").value;
+ const score=Math.round(Math.min(sl,8)/8*30+en/5*30+(5-st)/4*25+mo/5*15);
+ const dip=Math.round((sl<7?16:8)+st*2);
+ const c=x=>Math.max(8,Math.min(100,Math.round(x)));
+ const f=[["Morning",c(score)],["Midday",c(score+(en>3?5:0))],["3 pm",c(score-dip)],["Evening",c(score-4+(mo-3)*4)]];
+ let r;
+ if(st>=4)r={k:"breath",t:"Box breathing",d:"Stress is the loudest signal today. Breathe in 4, hold 4, out 4, hold 4. Follow the circle for one minute."};
+ else if(sl<6.5)r={k:"steps",t:"Light before caffeine",d:"Short sleep makes the 3 pm dip steeper. Step outside for sunlight and a glass of water, then keep your last chai before 2 pm.",steps:["Step outside or sit by a bright window","Drink a full glass of water","Take slow deep breaths"]};
+ else if(en<=2)r={k:"steps",t:"Two-minute movement snack",d:"Low energy responds to movement more than rest. Walk, climb stairs or stretch for one minute.",steps:["Stand up and roll your shoulders","Walk briskly or take the stairs","Finish with 10 calf raises"]};
+ else r={k:"steps",t:"Protect the good day",d:"You are in decent shape. Drink water now and plan your hardest task before midday, while the forecast is clearest.",steps:["Drink a glass of water","Pick your one hardest task","Write its first step down"]};
+ const lab=score>=75?["Clear skies","Strong day ahead. Use the morning well."]:score>=55?["Mostly sunny","Steady, with a dip around 3 pm."]:score>=35?["Overcast","Go gently and pace your effort."]:["Low pressure","Be kind to yourself. Keep today small."];
+ return{score,f,r,lab,dipIdx:2};
+}
+function show(){
+ const d=calc();save(d.score);
+ $("form").classList.add("hide");$("result").classList.remove("hide");
+ $("head").textContent=d.lab[0];$("sub").textContent=d.lab[1];
+ const p=d.score/100;$("sky").style.background=`linear-gradient(180deg,hsl(${200-p*10} ${35+p*30}% ${40+p*30}%),hsl(${35+p*10} ${50+p*30}% ${55+p*25}%))`;
+ $("sun").style.opacity=.3+p*.7;$("sun").style.transform=`translateY(${(1-p)*40}px)`;
+ $("score").textContent=d.score;$("rl").textContent=d.lab[0];
+ $("bars").innerHTML=d.f.map((x,i)=>`<div class="bar ${i==2?"dip":""}">${x[1]}<i style="height:${x[1]*.9}px"></i>${x[0]}</div>`).join("");
+ $("rt").textContent=d.r.t;$("rd").textContent=d.r.d;$("breath").classList.toggle("hide",d.r.k!="breath");
+ $("tm").textContent="";$("start").textContent="Start 60-second ritual";$("start").disabled=false;
+ $("start").onclick=()=>ritual(d.r);
+ const h=load();$("hist").innerHTML=h.map(x=>`<i title="${new Date(x.t).toLocaleDateString()}" style="height:${x.s*.7}px"></i>`).join("");
+ $("hn").textContent=h.length>1?`${h.length} check-ins saved on this device`:"Check in daily to see your pattern here.";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function ritual(r){
+ clearInterval(timer);clearInterval(phaseT);let t=60;$("start").disabled=true;$("start").textContent="In progress";
+ const tick=()=>{$("tm").textContent="0:"+String(t).padStart(2,"0");if(t--<=0){clearInterval(timer);clearInterval(phaseT);$("tm").textContent="Done. Nice work.";$("rp").textContent="Ready";$("ring").style.transform="scale(.6)";$("start").textContent="Repeat";$("start").disabled=false}};
+ tick();timer=setInterval(tick,1000);
+ if(r.k=="breath"){const ph=["Breathe in","Hold","Breathe out","Hold"];let i=0;const step=()=>{$("rp").textContent=ph[i%4];$("ring").style.transform=(i%4==0||i%4==1)?"scale(1)":"scale(.6)";i++};step();phaseT=setInterval(step,4000)}
+ else{const s=r.steps;let i=0;const step=()=>{$("rd").textContent=s[Math.min(i,2)];i++};step();phaseT=setInterval(step,20000)}
+}
+$("go").onclick=show;
+$("again").onclick=()=>{clearInterval(timer);clearInterval(phaseT);$("result").classList.add("hide");$("form").classList.remove("hide");$("head").textContent="What's today's weather inside you?";$("sub").textContent="Four sliders, ten seconds. Get a forecast of your energy and one small thing to do about it."};
+</script></body></html>
